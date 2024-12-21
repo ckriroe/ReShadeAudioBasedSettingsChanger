@@ -23,5 +23,46 @@ namespace ShaderSettingsChangerTest
         public required float MaxFreqAmplitudeProlongerThreshholdPercent { get; set; }
         public required float MaxFreqAmplitudeDecayRate { get; set; }
         public required float PercentDiffFromMaxToBeExtraOrdanary { get; set; }
+
+        public override bool Equals(object? obj)
+        {
+            return obj is AudioConfig config &&
+                   PresetFilePath == config.PresetFilePath &&
+                   UniformConfigs.SequenceEqual(config.UniformConfigs) &&
+                   LoopBackDeviceLatency == config.LoopBackDeviceLatency &&
+                   FftSize == config.FftSize &&
+                   LastExtraOrdanarySampleBufferSize == config.LastExtraOrdanarySampleBufferSize &&
+                   MinFreq == config.MinFreq &&
+                   MaxFreq == config.MaxFreq &&
+                   MinFreqAmplitude == config.MinFreqAmplitude &&
+                   BelowMinFreqAmplitudeFunctionFactor == config.BelowMinFreqAmplitudeFunctionFactor &&
+                   MaxFreqAmplitudeIncreaseRatio == config.MaxFreqAmplitudeIncreaseRatio &&
+                   MaxFreqAmplitudeDecreaseRatio == config.MaxFreqAmplitudeDecreaseRatio &&
+                   MaxFreqAmplitudeTTL == config.MaxFreqAmplitudeTTL &&
+                   MaxFreqAmplitudeProlongerThreshholdPercent == config.MaxFreqAmplitudeProlongerThreshholdPercent &&
+                   MaxFreqAmplitudeDecayRate == config.MaxFreqAmplitudeDecayRate &&
+                   PercentDiffFromMaxToBeExtraOrdanary == config.PercentDiffFromMaxToBeExtraOrdanary;
+        }
+
+        public override int GetHashCode()
+        {
+            HashCode hash = new HashCode();
+            hash.Add(PresetFilePath);
+            hash.Add(UniformConfigs);
+            hash.Add(LoopBackDeviceLatency);
+            hash.Add(FftSize);
+            hash.Add(LastExtraOrdanarySampleBufferSize);
+            hash.Add(MinFreq);
+            hash.Add(MaxFreq);
+            hash.Add(MinFreqAmplitude);
+            hash.Add(BelowMinFreqAmplitudeFunctionFactor);
+            hash.Add(MaxFreqAmplitudeIncreaseRatio);
+            hash.Add(MaxFreqAmplitudeDecreaseRatio);
+            hash.Add(MaxFreqAmplitudeTTL);
+            hash.Add(MaxFreqAmplitudeProlongerThreshholdPercent);
+            hash.Add(MaxFreqAmplitudeDecayRate);
+            hash.Add(PercentDiffFromMaxToBeExtraOrdanary);
+            return hash.ToHashCode();
+        }
     }
 }

@@ -35,14 +35,22 @@ class Program
             .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
             .Build();
 
-        ChangeToken.OnChange(() => appConfig.GetReloadToken(), ReloadConfigValues);
+        ChangeToken.OnChange(() => appConfig.GetReloadToken(), () => ReloadConfigValues());
         ReloadConfigValues();
+        Console.WriteLine("Listening to audio. Press Enter to stop...");
+        Console.ReadLine();
+        StopFrequencyDetection();
     }
 
-    private static void ReloadConfigValues()
+    private static void ReloadConfigValues(bool reload = false)
     {
         try
         {
+            var loadedConfig = appConfig.GetSection("appConfig").Get<AudioConfig>()!;
+            if (loadedConfig.Equals(audioConfig) && !reload)
+                return;
+
+            audioConfig = loadedConfig;
             StopFrequencyDetection();
             audioConfig = appConfig.GetSection("appConfig").Get<AudioConfig>()!;
             InitPresetFile();
@@ -59,7 +67,7 @@ class Program
             Console.Error.WriteLine("Failed to start frequency detection: " + ex.ToString());
             Console.WriteLine("\nPress enter to try again...");
             Console.ReadLine();
-            ReloadConfigValues();
+            ReloadConfigValues(true);
         }
     }
 
@@ -174,9 +182,6 @@ class Program
         }, lastCancelationSource.Token);
 
         audioDetectionTask.Start();
-        Console.WriteLine("Listening to audio. Press Enter to stop...");
-        Console.ReadLine();
-        StopFrequencyDetection();
     }
 
     private static void StopFrequencyDetection()
@@ -279,6 +284,7 @@ class Program
         foreach (var uniformConfig in audioConfig.UniformConfigs.Where(c => c.LineIndex != -1))
         {
             presetLines[uniformConfig.LineIndex] = ($"{uniformConfig.Uniform}={uniformValue * uniformConfig.Factor}").Replace(',', '.');
+            Console.WriteLine(presetLines[uniformConfig.LineIndex]);
             changed = true;
         }
 
