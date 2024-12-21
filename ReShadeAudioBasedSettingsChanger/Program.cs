@@ -110,7 +110,7 @@ class Program
         { 
             try
             {
-                currentAudioCaputre = new WasapiLoopbackCapture(5, null, ThreadPriority.Highest);
+                currentAudioCaputre = new WasapiLoopbackCapture(audioConfig.LoopBackDeviceLatency, null, ThreadPriority.Highest);
                 var dev = currentAudioCaputre.Device;
                 currentAudioCaputre.Initialize();
 
