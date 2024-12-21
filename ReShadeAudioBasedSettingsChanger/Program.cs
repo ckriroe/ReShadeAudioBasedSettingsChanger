@@ -284,7 +284,6 @@ class Program
         foreach (var uniformConfig in audioConfig.UniformConfigs.Where(c => c.LineIndex != -1))
         {
             presetLines[uniformConfig.LineIndex] = ($"{uniformConfig.Uniform}={uniformValue * uniformConfig.Factor}").Replace(',', '.');
-            Console.WriteLine(presetLines[uniformConfig.LineIndex]);
             changed = true;
         }
 
