@@ -23,6 +23,7 @@ namespace ShaderSettingsChangerTest
         public required float MaxFreqAmplitudeProlongerThreshholdPercent { get; set; }
         public required float MaxFreqAmplitudeDecayRate { get; set; }
         public required float PercentDiffFromMaxToBeExtraOrdanary { get; set; }
+        public bool PrintDebugInfos { get; set; }
 
         public override bool Equals(object? obj)
         {
@@ -41,7 +42,8 @@ namespace ShaderSettingsChangerTest
                    MaxFreqAmplitudeTTL == config.MaxFreqAmplitudeTTL &&
                    MaxFreqAmplitudeProlongerThreshholdPercent == config.MaxFreqAmplitudeProlongerThreshholdPercent &&
                    MaxFreqAmplitudeDecayRate == config.MaxFreqAmplitudeDecayRate &&
-                   PercentDiffFromMaxToBeExtraOrdanary == config.PercentDiffFromMaxToBeExtraOrdanary;
+                   PercentDiffFromMaxToBeExtraOrdanary == config.PercentDiffFromMaxToBeExtraOrdanary &&
+                   PrintDebugInfos == config.PrintDebugInfos;
         }
 
         public override int GetHashCode()
@@ -62,6 +64,7 @@ namespace ShaderSettingsChangerTest
             hash.Add(MaxFreqAmplitudeProlongerThreshholdPercent);
             hash.Add(MaxFreqAmplitudeDecayRate);
             hash.Add(PercentDiffFromMaxToBeExtraOrdanary);
+            hash.Add(PrintDebugInfos);
             return hash.ToHashCode();
         }
     }

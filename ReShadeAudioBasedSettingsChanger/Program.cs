@@ -267,6 +267,9 @@ class Program
             adjustedFreqValue = Math.Max(0.0f, adjustedFreqValue);
         }
 
+        if (audioConfig.PrintDebugInfos)
+            Console.WriteLine(maxFreq);
+
         float uniformValue = Math.Max(0, (adjustedFreqValue - avg) / lastAproxMaxFreq);
 
         if (lastWrittenUniformValue != uniformValue)
