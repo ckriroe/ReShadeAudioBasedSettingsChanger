@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ReShadeAudioBasedSettingsChanger;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,8 +9,8 @@ namespace ShaderSettingsChangerTest
 {
     public class AudioConfig
     {
-        public required string PresetFilePath { get; set; }
-        public required List<UniformConfig> UniformConfigs { get; set; }
+        public required ShaderConfig ShaderConfig { get; set; }
+        public required ControllerConfig ControllerConfig { get; set; }
         public required int LoopBackDeviceLatency { get; set; }
         public required int FftSize { get; set; }
         public required int LastExtraOrdanarySampleBufferSize { get; set; }
@@ -28,8 +29,8 @@ namespace ShaderSettingsChangerTest
         public override bool Equals(object? obj)
         {
             return obj is AudioConfig config &&
-                   PresetFilePath == config.PresetFilePath &&
-                   UniformConfigs.SequenceEqual(config.UniformConfigs) &&
+                   ShaderConfig.Equals(config.ShaderConfig) &&
+                   ControllerConfig.Equals(config.ControllerConfig) &&
                    LoopBackDeviceLatency == config.LoopBackDeviceLatency &&
                    FftSize == config.FftSize &&
                    LastExtraOrdanarySampleBufferSize == config.LastExtraOrdanarySampleBufferSize &&
@@ -49,8 +50,8 @@ namespace ShaderSettingsChangerTest
         public override int GetHashCode()
         {
             HashCode hash = new HashCode();
-            hash.Add(PresetFilePath);
-            hash.Add(UniformConfigs);
+            hash.Add(ShaderConfig);
+            hash.Add(ControllerConfig);
             hash.Add(LoopBackDeviceLatency);
             hash.Add(FftSize);
             hash.Add(LastExtraOrdanarySampleBufferSize);

@@ -6,12 +6,14 @@ using ShaderSettingsChangerTest;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Primitives;
 using System.Text.RegularExpressions;
+using SharpDX.XInput;
+using System.Runtime.CompilerServices;
 
 class Program
 {
     private static IConfiguration appConfig;
     private static AudioConfig audioConfig;
-    private static string[] presetLines = [];
+    private static string[] presetLines = null!;
 
     private static float[] sampleBuffer = [];
     private static int sampleIndex;
@@ -22,14 +24,17 @@ class Program
     private static float lastAproxMaxFreq = -1.0f;
     private static int lastAproxMaxFreqEval = -1;
 
-
-    private static WasapiLoopbackCapture currentAudioCaputre = null;
-    private static Task audioDetectionTask = null;
-    private static CancellationTokenSource lastCancelationSource = null;
+    private static WasapiLoopbackCapture currentAudioCaputre = null!;
+    private static Task audioDetectionTask = null!;
+    private static CancellationTokenSource lastCancelationSource = null!;
     private static bool isInitalFrame = false;
+
+    private static Controller controller;
+    private static bool wasControllerDisconnected = false;
 
     static void Main()
     {
+        controller = new Controller(UserIndex.One);
         appConfig = new ConfigurationBuilder()
             .SetBasePath(AppContext.BaseDirectory)
             .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
@@ -73,33 +78,35 @@ class Program
 
     private static void InitPresetFile()
     {
-        presetLines = File.ReadAllLines(audioConfig.PresetFilePath);
-
-        string? currentSection = null;
-        string sectionRegex = @"\[(.*?)\]";
-        int index = 0;
-
-        foreach (var line in presetLines)
+        if (audioConfig.ShaderConfig?.Enabled ?? false)
         {
-            Match match = Regex.Match(line, sectionRegex);
+            presetLines = File.ReadAllLines(audioConfig.ShaderConfig.PresetFilePath);
 
-            if (match.Success && match.Groups.Count == 2)
-            {
-                currentSection = match.Groups[1].Value;
-            } 
-            else if (!string.IsNullOrEmpty(currentSection))
-            {
-                var config = audioConfig?.UniformConfigs?.FirstOrDefault(u =>
-                    u.Section.Equals(currentSection, StringComparison.OrdinalIgnoreCase) &&
-                    line.StartsWith(u.Uniform, StringComparison.OrdinalIgnoreCase));
+            string? currentSection = null;
+            string sectionRegex = @"\[(.*?)\]";
+            int index = 0;
 
-                if (config != null)
+            foreach (var line in presetLines)
+            {
+                Match match = Regex.Match(line, sectionRegex);
+
+                if (match.Success && match.Groups.Count == 2)
                 {
-                    config.LineIndex = index;
-                }
-            }
+                    currentSection = match.Groups[1].Value;
+                } else if (!string.IsNullOrEmpty(currentSection))
+                {
+                    var config = audioConfig.ShaderConfig?.UniformConfigs?.FirstOrDefault(u =>
+                        u.Section.Equals(currentSection, StringComparison.OrdinalIgnoreCase) &&
+                        line.StartsWith(u.Uniform, StringComparison.OrdinalIgnoreCase));
 
-            index++;
+                    if (config != null)
+                    {
+                        config.LineIndex = index;
+                    }
+                }
+
+                index++;
+            }
         }
     }
 
@@ -274,6 +281,7 @@ class Program
 
         if (lastWrittenUniformValue != uniformValue)
         {
+            SetControllerVibration(controller, uniformValue);
             WriteValueToUniforms(uniformValue);
         }
 
@@ -282,20 +290,55 @@ class Program
 
     private static void WriteValueToUniforms(float uniformValue)
     {
-        bool changed = false;
-
-        foreach (var uniformConfig in audioConfig.UniformConfigs.Where(c => c.LineIndex != -1))
+        if (audioConfig.ShaderConfig.Enabled)
         {
-            presetLines[uniformConfig.LineIndex] = ($"{uniformConfig.Uniform}={uniformValue * uniformConfig.Factor}").Replace(',', '.');
-            changed = true;
-        }
+            if (presetLines == null)
+            {
+                InitPresetFile();
+            }
 
-        if (changed)
-            File.WriteAllLines(audioConfig.PresetFilePath, presetLines);
+            bool changed = false;
+
+            foreach (var uniformConfig in audioConfig.ShaderConfig.UniformConfigs.Where(c => c.LineIndex != -1))
+            {
+                presetLines[uniformConfig.LineIndex] = ($"{uniformConfig.Uniform}={uniformValue * uniformConfig.Factor}").Replace(',', '.');
+                changed = true;
+            }
+
+            if (changed)
+                File.WriteAllLines(audioConfig.ShaderConfig.PresetFilePath, presetLines);
+        }
     }
 
     static void FFT(Complex[] buffer)
     {
         MathNet.Numerics.IntegralTransforms.Fourier.Forward(buffer, MathNet.Numerics.IntegralTransforms.FourierOptions.Matlab);
+    }
+
+    static void SetControllerVibration(Controller controller, float motorStrength)
+    {
+        if (audioConfig?.ControllerConfig?.Enabled ?? false && controller.IsConnected)
+        {
+            motorStrength = Math.Clamp(motorStrength * audioConfig.ControllerConfig.RumbleFactor, 0.0f, 1.0f);
+            var vibration = new Vibration
+            {
+                LeftMotorSpeed = (ushort)(motorStrength * 65535),
+                RightMotorSpeed = (ushort)(motorStrength * 65535)
+            };
+
+            try
+            {
+                controller.SetVibration(vibration);
+                wasControllerDisconnected = false;
+            } 
+            catch (Exception ex)
+            {
+                if (!wasControllerDisconnected)
+                {
+                    wasControllerDisconnected = true;
+                    Console.WriteLine("Controller disconnected!");
+                } 
+            }            
+        }     
     }
 }
